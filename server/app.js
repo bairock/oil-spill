@@ -43,11 +43,7 @@ async function main() {
             }
             return err
         },
-        plugins: [
-            process.env.MODE === 'production'
-                ? ApolloServerPluginLandingPageDisabled()
-                : ApolloServerPluginLandingPageGraphQLPlayground()
-        ]
+        plugins: [ApolloServerPluginLandingPageGraphQLPlayground()]
     })
 
     const app = express()
@@ -56,6 +52,9 @@ async function main() {
 
     app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }))
     app.use(bodyParser.json({ limit: '50mb' }))
+
+    app.use('/api', require('./src/api'))
+    app.use('/uploads', express.static(__dirname + '/uploads'))
 
     await server.start()
 
