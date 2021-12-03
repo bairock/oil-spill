@@ -1,0 +1,35 @@
+{
+    "name": "oil-spill-server",
+    "version": "0.0.1",
+    "main": "index.js",
+    "author": "PetrVasilev",
+    "license": "MIT",
+    "scripts": {
+        "start": "MODE=development nodemon -e js,graphql app.js",
+        "build": "npx prisma migrate dev && npx prisma generate",
+        "generate": "node generate.js"
+    },
+    "dependencies": {
+        "@graphql-tools/graphql-file-loader": "^7.3.3",
+        "@graphql-tools/load": "^7.4.1",
+        "@graphql-tools/schema": "^8.3.1",
+        "@paljs/generator": "^4.0.12",
+        "@paljs/plugins": "^4.0.8",
+        "@paljs/schema": "^4.0.6",
+        "@prisma/client": "^3.6.0",
+        "apollo-server-core": "^3.5.0",
+        "apollo-server-express": "^3.5.0",
+        "bcryptjs": "^2.4.3",
+        "body-parser": "^1.19.0",
+        "dotenv": "^10.0.0",
+        "express": "^4.17.1",
+        "graphql": "^16.0.1",
+        "graphql-middleware": "^6.1.12",
+        "graphql-shield": "^7.5.0",
+        "jsonwebtoken": "^8.5.1"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.15",
+        "prisma": "^3.6.0"
+    }
+}
