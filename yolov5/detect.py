@@ -175,28 +175,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
                         object_name = names[int(cls)]
 
-                        # variables = {
-                        #     'data': { 
-                        #         'squares': [{
-                        #             'x1': x1, 
-                        #             'y1': y1, 
-                        #             'x2': x2, 
-                        #             'y2': y2  
-                        #         }]
-                        #     }
-                        # }
-
-                        # query = """
-                        #     mutation ($data:CameraUpdateInput!){
-                        #         updateOneCamera(where: { id: "0" }, data: $data){
-                        #             id
-                        #         }
-                        #     }
-                        # """
-                        
-                        # req = requests.post('http://192.168.31.212:8000/', json={'query': query, 'variables': variables})
-
-                        # print('req status', req.status_code)
                         print('bounding box is', x1, y1, x2, y2)
                         print('detected object name is', object_name)
 

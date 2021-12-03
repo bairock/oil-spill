@@ -20,11 +20,20 @@ model Target {
   id                String   @id @default(cuid())
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  name              String
-  image             String
+  name              String   
+  images            Image[]  
   latitude          String
   longitude         String
-  cornerCoordinates Json
+}
+
+model Image {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  name              String
   date              DateTime @default(now())
+  target            Target?  @relation(fields: [targetId], references: [id])
+  targetId          String?
+  cornerCoordinates Json
   status            Int      @default(0)
 }

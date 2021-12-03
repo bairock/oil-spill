@@ -20,12 +20,16 @@ export const FIND_MANY_TARGET = gql`
             id
             createdAt
             updatedAt
-            image
+            images(orderBy: {date: desc}) {
+                id
+                date
+                name
+                cornerCoordinates
+                status
+            }
+            name
             latitude
             longitude
-            status
-            date
-            cornerCoordinates
         }
     }
 `
