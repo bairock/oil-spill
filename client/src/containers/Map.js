@@ -1,19 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable eqeqeq */
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 import { useQuery } from '@apollo/client'
 
-import { Label, LoadingView as Loading } from '../components'
+import { Label, LoadingView as Loading, MapComponent, map, Top } from '../components'
 import { FIND_MANY_TARGET } from '../gqls'
-import {
-    Spin,
-    List,
-    Card as AntCard,
-    Image as AntImage
-} from 'antd'
+import { Spin, List, Card as AntCard, Button } from 'antd'
 import moment from 'moment'
-
-const accessToken =
-    'pk.eyJ1IjoicGV0cnZhc2lsZXYiLCJhIjoiY2p1Y2VmaDBiMG5hMDQ0cHJldHM0bTJ3ZSJ9.AYFGrrKc4B2QeG2RGZTRJg'
 
 const Container = styled.div`
     display: flex;
@@ -23,11 +17,6 @@ const Container = styled.div`
     .mapboxgl-ctrl-logo {
         display: none;
     }
-`
-
-const MapContainer = styled.div`
-    width: 100%;
-    height: 400px;
 `
 
 const MapDataContainer = styled.div`
@@ -60,9 +49,9 @@ const Card = styled(AntCard)`
     box-sizing: border-box;
     border: 1px solid silver;
     cursor: pointer;
-    background-color: ${props => props.background};
-    
-    .ant-card-body{
+    background-color: ${(props) => props.background};
+
+    .ant-card-body {
         padding: 15px;
     }
 `
@@ -89,50 +78,32 @@ const ImagesContainer = styled.div`
 const Image = styled.img`
     width: 90px;
     height: 90px;
-    ${props => props.selected ? 'border: 2px solid #1890ff' : null};
+    ${(props) => (props.selected ? 'border: 2px solid #1890ff' : null)};
 `
 
-const MapComponent = () => {
-    let mapRef = useRef(new Map()).current
+const MapContainer = () => {
     const [selectedTarget, setSelectedTarger] = useState(null)
     const [selectedImage, setSelectedImage] = useState(null)
 
     let defaultCoordinates = [72.9939, 60.52575]
 
-    const initMap = () => {
-        let map = mapRef.get("map")
-        const mapContainer = document.getElementById("map")
-        if (!map && mapContainer) {
-            window.mapboxgl.accessToken = accessToken
-            map = new window.mapboxgl.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/satellite-v9',
-                center: defaultCoordinates,
-                zoom: 8
-            })
-            mapRef.set("map", map)
-        }
-        return map
-    }
-
     useEffect(() => {
-        const map = mapRef.get("map")
         if (selectedTarget && map) {
             map.flyTo({
-                center: [selectedTarget.longitude, selectedTarget.latitude],
+                center: [selectedTarget.longitude, selectedTarget.latitude]
             })
-            setSelectedImage(selectedImage)
         }
     }, [selectedTarget])
 
     const changeTarget = (newTarget) => {
-        const map = mapRef.get("map")
         if (newTarget && map && newTarget.id !== selectedTarget.id) {
             map.flyTo({
                 center: [newTarget.longitude, newTarget.latitude],
+                zoom: 9,
+                speed: 1
             })
             map.removeLayer(selectedTarget.id)
-            map.removeLayer(selectedTarget.id + "-outline")
+            map.removeLayer(selectedTarget.id + '-outline')
             const { images } = newTarget
             if (images.length > 0) {
                 const firstImage = images[0]
@@ -144,7 +115,7 @@ const MapComponent = () => {
                     source: firstImage.id + '-polygon',
                     paint: {
                         'line-color': '#23ff3e',
-                        'line-width': 2,
+                        'line-width': 2
                     }
                 })
                 map.addLayer({
@@ -158,66 +129,65 @@ const MapComponent = () => {
 
     const { data, loading } = useQuery(FIND_MANY_TARGET, {
         onCompleted: ({ findManyTarget }) => {
-            const map = initMap()
             if (findManyTarget.length > 0) {
-                setSelectedTarger(findManyTarget[0])
+                const firstTarget = findManyTarget[0]
+                setSelectedTarger(firstTarget)
+                if (firstTarget.images.length > 0) {
+                    setSelectedImage(firstTarget.images[0])
+                }
                 if (map) {
-                    map.on('load', () => {
-                        for (let target of findManyTarget) {
-                            if (target.images.length > 0) {
-                                const firstImage = target.images[0]
-                                setSelectedImage(firstImage)
-                                for (let image of target.images) {
-                                    const coordinates = Object.values(image.cornerCoordinates)
-                                    map.addSource(image.id, {
-                                        type: 'image',
-                                        url: '/uploads/' + image.name,
-                                        coordinates
-                                    })
-                                    map.addSource(image.id + '-polygon', {
-                                        'type': 'geojson',
-                                        'data': {
-                                            'type': 'Feature',
-                                            'geometry': {
-                                                'type': 'LineString',
-                                                coordinates: [...coordinates, coordinates[0]]
-                                            }
+                    for (let target of findManyTarget) {
+                        if (target.images.length > 0) {
+                            const firstImage = target.images[0]
+                            for (let image of target.images) {
+                                const coordinates = Object.values(image.cornerCoordinates)
+                                map.addSource(image.id, {
+                                    type: 'image',
+                                    url: '/uploads/' + image.name,
+                                    coordinates
+                                })
+                                map.addSource(image.id + '-polygon', {
+                                    type: 'geojson',
+                                    data: {
+                                        type: 'Feature',
+                                        geometry: {
+                                            type: 'LineString',
+                                            coordinates: [...coordinates, coordinates[0]]
                                         }
-                                    })
-                                }
-                                map.addLayer({
-                                    id: target.id + '-outline',
-                                    type: 'line',
-                                    source: firstImage.id + '-polygon',
-                                    paint: {
-                                        'line-color': '#23ff3e',
-                                        'line-width': 2,
                                     }
                                 })
-                                map.addLayer({
-                                    id: target.id,
-                                    type: 'raster',
-                                    source: firstImage.id
-                                })
                             }
+                            map.addLayer({
+                                id: target.id + '-outline',
+                                type: 'line',
+                                source: firstImage.id + '-polygon',
+                                paint: {
+                                    'line-color': '#23ff3e',
+                                    'line-width': 2
+                                }
+                            })
+                            map.addLayer({
+                                id: target.id,
+                                type: 'raster',
+                                source: firstImage.id
+                            })
                         }
-                    })
+                    }
                 }
             }
         },
-        onError: e => {
-            initMap()
+        onError: (e) => {
+            console.error(e)
         },
-        fetchPolicy: "network-only"
+        fetchPolicy: 'network-only'
     })
 
-    const targets = useMemo(() => data && data.findManyTarget ? data.findManyTarget : [])
+    const targets = useMemo(() => (data && data.findManyTarget ? data.findManyTarget : []))
 
     const setLayoutImage = (image) => {
-        const map = mapRef.get("map")
         if (map.getLayer(selectedTarget.id)) {
             map.removeLayer(selectedTarget.id)
-            map.removeLayer(selectedTarget.id + "-outline")
+            map.removeLayer(selectedTarget.id + '-outline')
             map.addLayer({
                 id: selectedTarget.id,
                 type: 'raster',
@@ -229,7 +199,7 @@ const MapComponent = () => {
                 source: image.id + '-polygon',
                 paint: {
                     'line-color': '#23ff3e',
-                    'line-width': 2,
+                    'line-width': 2
                 }
             })
             setSelectedImage(image)
@@ -269,83 +239,86 @@ const MapComponent = () => {
         return '-'
     }, [selectedTarget])
 
+    const exportData = () => {
+        
+    }
+
     return (
-        <Container>
-            {loading && (
-                <LoadingView>
-                    <Spin />
-                </LoadingView>
-            )}
-            <MapDataContainer>
-                <MapContainer id="map" />
-                {
-                    selectedTarget && (
+        <>
+            <Top
+                title="Карта"
+                action={
+                    <Button onClick={exportData} type="link">
+                        Экспорт данных
+                    </Button>
+                }
+            />
+            <Container>
+                {loading && (
+                    <LoadingView>
+                        <Spin />
+                    </LoadingView>
+                )}
+                <MapDataContainer>
+                    <MapComponent defaultCoordinates={defaultCoordinates} />
+                    {selectedTarget && (
                         <Info>
                             <ImagesContainer>
-                                {
-                                    selectedTarget.images.map(item => (
-                                        <div key={item.id} onClick={() => setLayoutImage(item)} className="item">
-                                            <Image
-                                                src={'/uploads/' + item.name}
-                                                preview={false}
-                                                selected={selectedImage && item.id === selectedImage.id}
-                                            />
-                                            <div className="date">{moment(item.date).format("DD.MM.YY")}</div>
-                                            <div>{statusText(item.status)}</div>
+                                {selectedTarget.images.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => setLayoutImage(item)}
+                                        className="item"
+                                    >
+                                        <Image
+                                            src={'/uploads/' + item.name}
+                                            preview={false}
+                                            selected={selectedImage && item.id === selectedImage.id}
+                                        />
+                                        <div className="date">
+                                            {moment(item.date).format('DD.MM.YY')}
                                         </div>
-                                    ))
-                                }
+                                        <div>{statusText(item.status)}</div>
+                                    </div>
+                                ))}
                             </ImagesContainer>
-                            <Label
-                                label="Название"
-                                value={selectedTarget.name}
-                            />
-                            <Label
-                                label="Общий статус"
-                                value={targetStatusText}
-                            />
+                            <Label label="Название" value={selectedTarget.name} />
+                            <Label label="Общий статус" value={targetStatusText} />
                             <Label
                                 label="Координаты"
                                 value={`${selectedTarget.longitude}, ${selectedTarget.latitude}`}
                             />
                             <Label
                                 label="Обновлено"
-                                value={moment(selectedTarget.updatedAt).format("DD.mm.yyyy HH:mm")}
+                                value={moment(selectedTarget.updatedAt).format('DD.mm.yyyy HH:mm')}
                             />
                         </Info>
-                    )
-                }
-            </MapDataContainer>
-            <Controls>
-                <List
-                    className="list"
-                    dataSource={targets}
-                    rowKey={item => item.id}
-                    grid={{ gutter: 0, column: 1 }}
-                    renderItem={item => (
-                        <List.Item
-                            onClick={() => changeTarget(item)}
-                        >
-                            <Card
-                                background={selectedTarget && item.id === selectedTarget.id ? "#FAFAD2" : "white"}
-                            >
-                                <Label
-                                    column
-                                    label="Название"
-                                    value={item.name}
-                                />
-                                {/* <Label
-                                    column
-                                    label="Статус"
-                                    value={item.status}
-                                /> */}
-                            </Card>
-                        </List.Item>
                     )}
-                />
-            </Controls>
-        </Container>
+                </MapDataContainer>
+                <Controls>
+                    <List
+                        className="list"
+                        dataSource={targets}
+                        rowKey={(item) => item.id}
+                        grid={{ gutter: 0, column: 1 }}
+                        renderItem={(item) => (
+                            <List.Item onClick={() => changeTarget(item)}>
+                                <Card
+                                    background={
+                                        selectedTarget && item.id === selectedTarget.id
+                                            ? '#FAFAD2'
+                                            : 'white'
+                                    }
+                                >
+                                    <Label column label="Название" value={item.name} />
+                                </Card>
+                            </List.Item>
+                        )}
+                    />
+                </Controls>
+            </Container>
+        </>
     )
 }
 
-export default MapComponent
+export default MapContainer

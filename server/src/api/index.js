@@ -2,45 +2,45 @@ const express = require('express')
 const moment = require('moment')
 
 const { prisma } = require('../../utils/context')
-const { upload } = require('../../utils/multer')
+const { upload, deleteFile } = require('../../utils/multer')
 
 const router = express.Router()
 
-// ML get targets
-router.get('/targets', async (req, res) => {
-    const { status } = req.query
-    const targets = await prisma.target.findMany({
-        where: {
-            status: status ? parseInt(status) : undefined
-        },
-        select: {
-            images: true
-        }
+router.post('/image', upload.single('image'), async (req, res) => {
+    return res.json({
+        filename: req.file.filename
     })
-    return res.json(targets)
 })
 
-// ML update one target
-router.put('/targets/:id', upload.single('image'), async (req, res) => {
+// ML get images
+router.get('/images', async (req, res) => {
+    const images = await prisma.image.findMany({
+        where: {
+            status: { equals: 0 }
+        }
+    })
+    return res.json(images)
+})
+
+// ML update one image
+router.put('/images/:id', upload.single('image'), async (req, res) => {
     if (!req.file) return res.sendStatus(400)
     const { id } = req.params
     const { status, date, cornerCoordinates } = req.body
     const { filename } = req.file
 
-    const target = await prisma.target.findUnique({ where: { id } })
-    if (!target) return res.sendStatus(404)
+    const existImage = await prisma.image.findUnique({ where: { id } })
+    if (!existImage) return res.sendStatus(404)
 
-    await prisma.target.update({
+    await deleteFile(existImage.name)
+
+    await prisma.image.update({
         where: { id },
         data: {
-            images: {
-                create: {
-                    name: filename,
-                    date: moment(date).toISOString(),
-                    cornerCoordinates,
-                    status: parseInt(status),
-                }
-            }
+            name: { set: filename },
+            date: { set: moment(date).toISOString() },
+            cornerCoordinates,
+            status: { set: parseInt(status) }
         }
     })
 
@@ -76,7 +76,7 @@ router.post('/targets', upload.single('image'), async (req, res) => {
                             2: cornerCoordinatesArr[1],
                             3: cornerCoordinatesArr[2],
                             4: cornerCoordinatesArr[3]
-                        },
+                        }
                     }
                 }
             }
@@ -100,7 +100,7 @@ router.post('/targets', upload.single('image'), async (req, res) => {
                         2: cornerCoordinatesArr[1],
                         3: cornerCoordinatesArr[2],
                         4: cornerCoordinatesArr[3]
-                    },
+                    }
                 }
             }
         }

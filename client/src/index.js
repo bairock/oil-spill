@@ -15,6 +15,7 @@ import apolloClient from './utils/apollo'
 import Home from './pages/home'
 import Login from './pages/login'
 import Map from './pages/map'
+import Workers from './pages/workers'
 
 const App = () => {
     return (
@@ -43,6 +44,15 @@ const App = () => {
                             element={
                                 <Layout>
                                     <Map />
+                                </Layout>
+                            }
+                        />
+                        <Route
+                            path="/workers"
+                            exact
+                            element={
+                                <Layout>
+                                    <Workers />
                                 </Layout>
                             }
                         />
