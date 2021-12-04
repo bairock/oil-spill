@@ -14,6 +14,7 @@ import Login from './pages/login'
 import Map from './pages/map'
 import Target from './pages/target'
 import Workers from './pages/workers'
+import Add from './pages/add'
 
 const App = () => {
     return (
@@ -55,6 +56,15 @@ const App = () => {
                             element={
                                 <Layout>
                                     <Workers />
+                                </Layout>
+                            }
+                        />
+                        <Route
+                            path="/Add"
+                            exact
+                            element={
+                                <Layout>
+                                    <Add />
                                 </Layout>
                             }
                         />

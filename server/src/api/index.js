@@ -1,5 +1,6 @@
 const express = require('express')
 const moment = require('moment')
+const fs = require('fs')
 
 const { prisma } = require('../../utils/context')
 const { upload, deleteFile } = require('../../utils/multer')
@@ -10,6 +11,16 @@ router.post('/image', upload.single('image'), async (req, res) => {
     return res.json({
         filename: req.file.filename
     })
+})
+
+router.delete('/targets', async (req, res) => {
+    await prisma.target.deleteMany({})
+    await prisma.image.deleteMany({})
+    const files = fs.readdirSync(__dirname + '/../../uploads')
+    for (let file of files) {
+        deleteFile(file)
+    }
+    return res.sendStatus(200)
 })
 
 // ML get images
@@ -52,7 +63,7 @@ router.put('/images/:id', upload.single('image'), async (req, res) => {
 // API for Satellite
 router.post('/targets', upload.single('image'), async (req, res) => {
     const { filename } = req.file
-    const { lng, ltd, date, cornerCoordinates } = req.body
+    const { lng, ltd, date, cornerCoordinates, name, status } = req.body
 
     let cornerCoordinatesArr = JSON.parse(cornerCoordinates)
 
@@ -76,7 +87,8 @@ router.post('/targets', upload.single('image'), async (req, res) => {
                             2: cornerCoordinatesArr[1],
                             3: cornerCoordinatesArr[2],
                             4: cornerCoordinatesArr[3]
-                        }
+                        },
+                        status: parseInt(status)
                     }
                 }
             }
@@ -90,7 +102,7 @@ router.post('/targets', upload.single('image'), async (req, res) => {
         data: {
             latitude: ltd,
             longitude: lng,
-            name: filename,
+            name: name,
             images: {
                 create: {
                     name: filename,
@@ -100,7 +112,8 @@ router.post('/targets', upload.single('image'), async (req, res) => {
                         2: cornerCoordinatesArr[1],
                         3: cornerCoordinatesArr[2],
                         4: cornerCoordinatesArr[3]
-                    }
+                    },
+                    status: parseInt(status)
                 }
             }
         }

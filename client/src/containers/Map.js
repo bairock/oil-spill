@@ -112,13 +112,20 @@ const MapContainer = ({ history }) => {
                 zoom: 9,
                 speed: 1
             })
-            map.removeLayer(selectedTarget.id)
-            map.removeLayer(selectedTarget.id + '-outline')
+            if (map.getLayer(selectedTarget.id)) {
+                map.removeLayer(selectedTarget.id)
+                map.removeLayer(selectedTarget.id + '-outline')
+            }
             const { images } = newTarget
             if (images.length > 0) {
                 const firstImage = images[0]
                 setSelectedImage(firstImage)
                 setSelectedTarger(newTarget)
+                map.addLayer({
+                    id: newTarget.id,
+                    type: 'raster',
+                    source: firstImage.id
+                })
                 map.addLayer({
                     id: newTarget.id + '-outline',
                     type: 'line',
@@ -128,19 +135,26 @@ const MapContainer = ({ history }) => {
                         'line-width': 2
                     }
                 })
-                map.addLayer({
-                    id: newTarget.id,
-                    type: 'raster',
-                    source: firstImage.id
-                })
             }
         }
     }
 
+    useEffect(() => {
+        return () => {
+            if (map) {
+                map.remove()
+            }
+        }
+    }, [])
+
     const { data, loading } = useQuery(FIND_MANY_TARGET, {
-        onCompleted: ({ findManyTarget }) => {
+        onCompleted: async ({ findManyTarget }) => {
             if (findManyTarget.length > 0) {
                 const firstTarget = findManyTarget[0]
+                if (selectedTarget) {
+                    await map.removeLayer(selectedTarget.id)
+                    await map.removeLayer(selectedTarget.id + '-outline')
+                }
                 setSelectedTarger(firstTarget)
                 if (firstTarget.images.length > 0) {
                     setSelectedImage(firstTarget.images[0])
@@ -148,9 +162,13 @@ const MapContainer = ({ history }) => {
                 if (map) {
                     for (let target of findManyTarget) {
                         if (target.images.length > 0) {
-                            const firstImage = target.images[0]
                             for (let image of target.images) {
                                 const coordinates = Object.values(image.cornerCoordinates)
+                                const source = await map.getSource(image.id)
+                                if (source) {
+                                    await map.removeSource(image.id)
+                                    await map.removeSource(image.id + '-polygon')
+                                }
                                 map.addSource(image.id, {
                                     type: 'image',
                                     url: '/uploads/' + image.name,
@@ -167,8 +185,17 @@ const MapContainer = ({ history }) => {
                                     }
                                 })
                             }
+                        }
+                    }
+                    if (!map.getLayer(firstTarget.id)) {
+                        if (
+                            firstTarget.images.length > 0 &&
+                            map.getSource(firstTarget.images[0].id) &&
+                            map.getSource(firstTarget.images[0].id + '-polygon')
+                        ) {
+                            const firstImage = firstTarget.images[0]
                             map.addLayer({
-                                id: target.id + '-outline',
+                                id: firstTarget.id + '-outline',
                                 type: 'line',
                                 source: firstImage.id + '-polygon',
                                 paint: {
@@ -177,7 +204,7 @@ const MapContainer = ({ history }) => {
                                 }
                             })
                             map.addLayer({
-                                id: target.id,
+                                id: firstTarget.id,
                                 type: 'raster',
                                 source: firstImage.id
                             })
@@ -189,7 +216,8 @@ const MapContainer = ({ history }) => {
         onError: (e) => {
             console.error(e)
         },
-        fetchPolicy: 'network-only'
+        fetchPolicy: 'network-only',
+        pollInterval: 5000
     })
 
     const targets = useMemo(() => (data && data.findManyTarget ? data.findManyTarget : []))
@@ -356,7 +384,7 @@ const MapContainer = ({ history }) => {
                                             selected={selectedImage && item.id === selectedImage.id}
                                         />
                                         <div className="date">
-                                            {moment(item.date).format('DD.MM.YY')}
+                                            {moment(item.date).format('DD.MM.YY HH:mm')}
                                         </div>
                                         <div>{statusText(item.status)}</div>
                                     </div>

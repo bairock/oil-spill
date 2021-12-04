@@ -16,6 +16,9 @@ export const Menu = () => {
             <AntMenu.Item key={`/workers`}>
                 <Link to={`/workers`}>Сотрудники</Link>
             </AntMenu.Item>
+            <AntMenu.Item key={`/add`}>
+                <Link to={`/add`}>API</Link>
+            </AntMenu.Item>
         </AntMenu>
     )
 }
