@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
-    Table,
+    Table as AntTable,
     Popconfirm,
     message
 } from 'antd'
@@ -11,6 +11,16 @@ import { useQuery, useMutation } from '@apollo/client'
 import { DELETE_ONE_WORKER, FIND_MANY_WORKER } from '../gqls'
 
 const limit = 50
+export let variables
+
+const Table = styled(AntTable)`
+    .delete-button {
+        position: relative;
+        color: red;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+`
 
 const WorkersContainer = () => {
     const [currentPage, setCurrentPage] = useState(1)
@@ -20,9 +30,33 @@ const WorkersContainer = () => {
             message.success("Сотрудник удалён")
         },
         onError: e => {
+            console.error(e)
             message.error("Что то пошло не так, повторите попытку позже")
+        },
+        update: (client, { data: { deleteOneWorker } }) => {
+            const prevData = client.readQuery({
+                query: FIND_MANY_WORKER,
+                variables
+            })
+            if (prevData) {
+                const { findManyWorker, findManyWorkerCount } = prevData
+                client.writeQuery({
+                    query: FIND_MANY_WORKER,
+                    variables,
+                    data: {
+                        findManyWorker: findManyWorker.filter(item => item.id !== deleteOneWorker.id),
+                        findManyWorkerCount: findManyWorkerCount - 1
+                    }
+                })
+            }
         }
     })
+
+    variables = useMemo(() => ({
+        take: limit,
+        skip: (currentPage - 1) * limit,
+        orderBy: [{ createdAt: 'desc' }],
+    }), [currentPage])
 
     const { data, loading } = useQuery(FIND_MANY_WORKER, {
         variables: {

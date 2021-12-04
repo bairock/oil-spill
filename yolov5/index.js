@@ -2,6 +2,8 @@ const { PythonShell } = require('python-shell')
 const fs = require('fs')
 const download = require('download')
 const { GraphQLClient, gql } = require('graphql-request')
+const axios = require('axios')
+const FormData = require('form-data')
 
 
 const findManyImageQuery = gql`
@@ -21,14 +23,40 @@ const updateOneImageMutation = gql`
     }
 `
 
-const client = new GraphQLClient('http://89.108.83.85/graphql')
-const uploads = 'http://89.108.83.85/uploads'
+const client = new GraphQLClient('http://xn--80aehalgul3asv.net/graphql')
+const uploads = 'http://xn--80aehalgul3asv.net/uploads'
+
+fs.watch('./runs/detect/', async (event, filename) => {
+    console.log(filename, event)
+    if (filename && event === 'change') {
+
+        const formData = new FormData()
+        formData.append('image', fs.createReadStream(`./runs/detect/${filename}/1.jpg`))
+        const upload = await axios.post('http://xn--80aehalgul3asv.net/api/image', formData, {
+            headers: formData.getHeaders()
+        })
+        if (upload && upload.data && upload.data.filename) {
+            try {
+                const variables = {
+                    where: {
+                        id: filename
+                    },
+                    data: {
+                        name: {
+                            set: upload.data.filename
+                        }
+                    }
+                }
+                const data = await client.request(updateOneImageMutation, variables)
+                console.log(data)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+    }
+})
 
 const runDetect = async (value, id) => {
-    if (fs.existsSync('./runs/detect')) {
-        await fs.rmSync('./runs/detect', { recursive: true })
-    }
-
     await download(value, './images', {
         filename: '1.jpg'
     })
@@ -40,10 +68,12 @@ const runDetect = async (value, id) => {
             './images/1.jpg',
             '--weights',
             'oil.pt',
+            '--name',
+            id,
             '--conf',
-            '0.4',
+            '0.7',
             // '--hide-conf',
-            '--hide-labels'
+            // '--hide-labels'
         ]
     }
     PythonShell.run('detect.py', options, async (err, result) => {
@@ -51,20 +81,7 @@ const runDetect = async (value, id) => {
             console.log('err', id)
             setTimeout(() => start(), 15000)
         } else {
-            if (result) {
-                const variables = {
-                    where: {
-                        id
-                    },
-                    data: {
-                        status: {
-                            set: 2
-                        }
-                    }
-                }
-                const data = await client.request(updateOneImageMutation, variables)
-                console.log(data)
-            } else {
+            if (!result) {
                 const variables = {
                     where: {
                         id
@@ -75,8 +92,19 @@ const runDetect = async (value, id) => {
                         }
                     }
                 }
-                const data = await client.request(updateOneImageMutation, variables)
-                console.log(data)
+                await client.request(updateOneImageMutation, variables)
+            } else {
+                const variables = {
+                    where: {
+                        id
+                    },
+                    data: {
+                        status: {
+                            set: 2
+                        }
+                    }
+                }
+                await client.request(updateOneImageMutation, variables)
             }
         }
     })
@@ -84,7 +112,6 @@ const runDetect = async (value, id) => {
 
 const start = async () => {
     const { findManyImage } = await client.request(findManyImageQuery)
-
 
     for (const { id, name } of findManyImage) {
         const url = `${uploads}/${name}`

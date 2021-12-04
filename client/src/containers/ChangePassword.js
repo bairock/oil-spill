@@ -1,24 +1,16 @@
-import { useMatch } from 'react-router-dom'
 import styled from 'styled-components'
-import {
-    Input,
-    Form,
-    Button as AntButton,
-    message,
-} from 'antd'
+import { Input, Form, Button as AntButton, message } from 'antd'
 // import { useMutation } from '@apollo/client'
 
 // import { CHANGE_PASSWORD_ADMIN } from '../gqls/admin'
 
-const Button = styled(AntButton)`
-
-`
+const Button = styled(AntButton)``
 
 const Container = styled.div`
     display: flex;
     flex-direction: column;
     max-width: 400px;
-    
+
     .change-pass-lable {
         font-size: 14px;
         color: gray;
@@ -32,7 +24,6 @@ const requiredRule = {
 }
 
 const ChangePassword = () => {
-
     const [form] = Form.useForm()
 
     const loading = false
@@ -49,7 +40,7 @@ const ChangePassword = () => {
 
     const handleSubmitForm = ({ password, confirmPassword }) => {
         if (password !== confirmPassword) {
-            message.error("Подтвердите пароль")
+            message.error('Подтвердите пароль')
         }
         // change({
         //     variables: {
@@ -65,22 +56,17 @@ const ChangePassword = () => {
         <>
             <Container>
                 <span className="change-pass-lable">Изменение пароля для входа</span>
-                <Form form={form} onFinish={handleSubmitForm} layout="vertical" name="change_password">
-                    <Form.Item
-                        name="password"
-                        rules={[requiredRule]}
-                    >
-                        <Input.Password
-                            placeholder="Введите новый пароль"
-                        />
+                <Form
+                    form={form}
+                    onFinish={handleSubmitForm}
+                    layout="vertical"
+                    name="change_password"
+                >
+                    <Form.Item name="password" rules={[requiredRule]}>
+                        <Input.Password placeholder="Введите новый пароль" />
                     </Form.Item>
-                    <Form.Item
-                        name="confirmPassword"
-                        rules={[requiredRule]}
-                    >
-                        <Input.Password
-                            placeholder="Введите новый пароль еще раз"
-                        />
+                    <Form.Item name="confirmPassword" rules={[requiredRule]}>
+                        <Input.Password placeholder="Введите новый пароль еще раз" />
                     </Form.Item>
                     <Button disabled={loading} type="primary" htmlType="submit">
                         Измененить

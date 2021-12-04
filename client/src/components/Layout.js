@@ -2,17 +2,16 @@ import styled from 'styled-components'
 import { Spin, Layout as AntLayout } from 'antd'
 import { Navigate } from 'react-router-dom'
 
-import {
-    Header,
-    Menu
-} from '.'
+import { Header, Menu } from '.'
 
 import { useUser } from '../utils/hooks'
 
 const { Content: AntContent, Footer: AntFooter, Sider: AntSider } = AntLayout
 
-export const Layout = ({ children, ...props }) => {
+export const Layout = ({ children, component, ...props }) => {
     const { user, loading, error } = useUser()
+
+    let Component = component
 
     if (loading) {
         return (
@@ -29,22 +28,15 @@ export const Layout = ({ children, ...props }) => {
     return (
         <Provider>
             <Sider breakpoint="lg" collapsedWidth="0">
-                <div className="logo">
-                    Панель управления
-                </div>
+                <div className="logo">Панель управления</div>
                 <Menu />
             </Sider>
             <AntLayout>
-                <Header
-                    user={user}
-                    {...props}
-                />
+                <Header user={user} {...props} />
                 <Content>
-                    <div className="inside">{children}</div>
+                    <div className="inside">{Component ? <Component {...props} /> : children}</div>
                 </Content>
-                <Footer>
-                    {`Панель администратора`}
-                </Footer>
+                <Footer>{`Панель администратора`}</Footer>
             </AntLayout>
         </Provider>
     )
@@ -93,7 +85,7 @@ const Provider = styled(AntLayout)`
         background: whitesmoke;
         cursor: pointer;
         transition: 0.3s background;
-        
+
         img {
             width: 60%;
         }

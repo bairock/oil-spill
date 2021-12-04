@@ -1,9 +1,9 @@
 import MapContainer from '../containers/Map'
 
-const Map = () => {
+const Map = ({ history }) => {
     return (
         <>
-            <MapContainer />
+            <MapContainer history={history} />
         </>
     )
 }

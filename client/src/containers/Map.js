@@ -1,13 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable eqeqeq */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import styled from 'styled-components'
 import { useQuery } from '@apollo/client'
+import { Spin, List, Card as AntCard, Button, Modal, Form, Select } from 'antd'
+import { useNavigate } from 'react-router-dom'
+import moment from 'moment'
+import styled from 'styled-components'
 
 import { Label, LoadingView as Loading, MapComponent, map, Top } from '../components'
 import { FIND_MANY_TARGET } from '../gqls'
-import { Spin, List, Card as AntCard, Button } from 'antd'
-import moment from 'moment'
+import { FIND_MANY_WORKER } from '../gqls/worker'
 
 const Container = styled.div`
     display: flex;
@@ -81,11 +83,15 @@ const Image = styled.img`
     ${(props) => (props.selected ? 'border: 2px solid #1890ff' : null)};
 `
 
-const MapContainer = () => {
+const MapContainer = ({ history }) => {
     const [selectedTarget, setSelectedTarger] = useState(null)
     const [selectedImage, setSelectedImage] = useState(null)
+    const [workerModalVisible, setWorkerModalVisible] = useState(false)
+    const [selectedWorker, setSelectedWorker] = useState(undefined)
 
     let defaultCoordinates = [72.9939, 60.52575]
+
+    const navigate = useNavigate()
 
     useEffect(() => {
         if (selectedTarget && map) {
@@ -94,6 +100,10 @@ const MapContainer = () => {
             })
         }
     }, [selectedTarget])
+
+    const { data: workersData } = useQuery(FIND_MANY_WORKER)
+
+    const workers = workersData ? workersData.findManyWorker : []
 
     const changeTarget = (newTarget) => {
         if (newTarget && map && newTarget.id !== selectedTarget.id) {
@@ -239,8 +249,71 @@ const MapContainer = () => {
         return '-'
     }, [selectedTarget])
 
-    const exportData = () => {
-        
+    const exportCSV = () => {
+        let stockData = selectedTarget.images.map((item) => {
+            let foundImage = item.status === 2 ? item.date : null
+            return {
+                '№': new Date().getTime().toString(),
+                'Дата обнаружения': foundImage ? moment(foundImage).format('DD.MM.YYYY HH:mm') : '',
+                'Площадь загрязненного участка (га)': foundImage ? '0,0368 + 0,0166' : '0',
+                Долгота: selectedTarget.longitude,
+                Широта: selectedTarget.latitude,
+                'Название объекта': selectedTarget.name,
+                'Дата регистрации': moment(selectedTarget.createdAt).format('DD.MM.YYYY HH:mm'),
+                'Категория земель': 'Земли лесного фонда'
+            }
+        })
+        const convertArrayOfObjectsToCSV = (args) => {
+            let result, ctr, keys, columnDelimiter, lineDelimiter, data
+
+            data = args.data || null
+            if (data == null || !data.length) {
+                return null
+            }
+
+            columnDelimiter = args.columnDelimiter || ','
+            lineDelimiter = args.lineDelimiter || '\n'
+
+            keys = Object.keys(data[0])
+
+            result = ''
+            result += keys.join(columnDelimiter)
+            result += lineDelimiter
+
+            data.forEach(function (item) {
+                ctr = 0
+                keys.forEach(function (key) {
+                    if (ctr > 0) result += columnDelimiter
+
+                    result += item[key]
+                    ctr++
+                })
+                result += lineDelimiter
+            })
+
+            return result
+        }
+        const downloadCSV = (args) => {
+            let data, filename, link
+            let csv = convertArrayOfObjectsToCSV({
+                data: stockData
+            })
+            if (csv == null) return
+
+            filename = args.filename || 'export.csv'
+
+            if (!csv.match(/^data:text\/csv/i)) {
+                csv = 'data:text/csv;charset=utf-8,' + csv
+            }
+            data = encodeURI(csv)
+
+            link = document.createElement('a')
+            link.setAttribute('href', data)
+            link.setAttribute('download', filename)
+            link.click()
+        }
+
+        downloadCSV({})
     }
 
     return (
@@ -248,9 +321,16 @@ const MapContainer = () => {
             <Top
                 title="Карта"
                 action={
-                    <Button onClick={exportData} type="link">
-                        Экспорт данных
-                    </Button>
+                    <div>
+                        {/* <Link to={`/target/${selectedTarget ? selectedTarget.id : ''}`}> */}
+                        <Button onClick={() => setWorkerModalVisible(true)} type="link">
+                            Экспорт PDF
+                        </Button>
+                        {/* </Link> */}
+                        <Button onClick={exportCSV} type="link">
+                            Экспорт CSV
+                        </Button>
+                    </div>
                 }
             />
             <Container>
@@ -286,7 +366,7 @@ const MapContainer = () => {
                             <Label label="Общий статус" value={targetStatusText} />
                             <Label
                                 label="Координаты"
-                                value={`${selectedTarget.longitude}, ${selectedTarget.latitude}`}
+                                value={`${selectedTarget.latitude}, ${selectedTarget.longitude}`}
                             />
                             <Label
                                 label="Обновлено"
@@ -317,6 +397,34 @@ const MapContainer = () => {
                     />
                 </Controls>
             </Container>
+
+            <Modal
+                title="Выберите сотрудника"
+                visible={workerModalVisible}
+                onCancel={() => setWorkerModalVisible(false)}
+                onOk={() => {
+                    if (selectedWorker) {
+                        navigate(`/target/${selectedTarget.id}?worker=${selectedWorker}`)
+                    } else {
+                        setWorkerModalVisible(false)
+                    }
+                }}
+            >
+                <Form>
+                    <Form.Item>
+                        <Select
+                            value={selectedWorker}
+                            onChange={(value) => setSelectedWorker(value)}
+                        >
+                            {workers.map((item) => (
+                                <Select.Option value={item.id} key={item.id}>
+                                    {item.name}
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </>
     )
 }

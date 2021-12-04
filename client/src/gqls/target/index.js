@@ -1,14 +1,14 @@
-import gql from "graphql-tag"
+import gql from 'graphql-tag'
 
 export const FIND_MANY_TARGET = gql`
-    query(
+    query (
         $where: TargetWhereInput
         $orderBy: [TargetOrderByWithRelationInput]
         $cursor: TargetWhereUniqueInput
         $take: Int
         $skip: Int
         $distinct: [TargetScalarFieldEnum]
-    ){
+    ) {
         findManyTarget(
             where: $where
             orderBy: $orderBy
@@ -16,11 +16,31 @@ export const FIND_MANY_TARGET = gql`
             take: $take
             skip: $skip
             distinct: $distinct
-        ){
+        ) {
             id
             createdAt
             updatedAt
-            images(orderBy: {date: desc}) {
+            images(orderBy: { date: desc }) {
+                id
+                date
+                name
+                cornerCoordinates
+                status
+            }
+            name
+            latitude
+            longitude
+        }
+    }
+`
+
+export const FIND_UNIQUE_TARGET = gql`
+    query ($where: TargetWhereUniqueInput!) {
+        findUniqueTarget(where: $where) {
+            id
+            createdAt
+            updatedAt
+            images(orderBy: { date: desc }) {
                 id
                 date
                 name

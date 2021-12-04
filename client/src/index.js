@@ -6,29 +6,22 @@ import { ConfigProvider } from 'antd'
 import 'antd/dist/antd.css'
 import { ApolloProvider } from '@apollo/client'
 
-import {
-    GlobalStyle,
-    Layout
-} from './components'
+import { GlobalStyle, Layout } from './components'
 import apolloClient from './utils/apollo'
 
 import Home from './pages/home'
 import Login from './pages/login'
 import Map from './pages/map'
+import Target from './pages/target'
 import Workers from './pages/workers'
 
 const App = () => {
     return (
-        <ApolloProvider client={apolloClient} >
+        <ApolloProvider client={apolloClient}>
             <ConfigProvider locale={locale}>
                 <Router>
                     <Routes>
-                        <Route
-                            path="/login"
-                            element={
-                                <Login />
-                            }
-                        />
+                        <Route path="/login" element={<Login />} />
                         <Route
                             path="/"
                             exact
@@ -44,6 +37,15 @@ const App = () => {
                             element={
                                 <Layout>
                                     <Map />
+                                </Layout>
+                            }
+                        />
+                        <Route
+                            path="/target/:id"
+                            exact
+                            element={
+                                <Layout>
+                                    <Target />
                                 </Layout>
                             }
                         />

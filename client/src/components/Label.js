@@ -6,7 +6,7 @@ const View = styled.div`
     align-items: flex-start;
     justify-content: flex-start;
     font-size: 14px;
-    max-width: 600px;
+    max-width: 1200px;
     margin-bottom: 12px;
 
     .label {
