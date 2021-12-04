@@ -1,6 +1,6 @@
 1. Create server/uploads folder
 
-2. Create .env config file in server/.env
+2. Create .env config file in server/.env && cd server
 
 ```
 PORT=4000
