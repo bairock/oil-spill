@@ -23,12 +23,16 @@ yarn start
 ```
 
 
-1. pip install -r requirements.txt
+1. Install dependencies
+
+```
+yarn install
+```
 
 2. Install dependencies
 
 ```
-yarn install
+pip install -r requirements.txt
 ```
 
 3. Run server
