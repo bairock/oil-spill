@@ -26,7 +26,7 @@ yarn start
 1. Install dependencies
 
 ```
-yarn install
+cd yolov5 && yarn install
 ```
 
 2. Install dependencies
