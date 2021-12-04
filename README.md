@@ -1,5 +1,4 @@
-# Header 1
-Server
+# Server
 
 1. Create server/uploads folder
 ```
@@ -28,9 +27,7 @@ yarn install
 yarn start
 ```
 
-# Header 1
-ML Service
-
+# ML Service
 
 1. Install dependencies
 
