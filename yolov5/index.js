@@ -1,5 +1,6 @@
 const { PythonShell } = require('python-shell')
 const fs = require('fs')
+const fsExtra = require('fs-extra')
 const download = require('download')
 const { GraphQLClient, gql } = require('graphql-request')
 const axios = require('axios')
@@ -71,7 +72,7 @@ const runDetect = async (value, id) => {
             '--name',
             id,
             '--conf',
-            '0.7',
+            '0.4',
             // '--hide-conf',
             // '--hide-labels'
         ]
@@ -112,6 +113,8 @@ const runDetect = async (value, id) => {
 
 const start = async () => {
     const { findManyImage } = await client.request(findManyImageQuery)
+
+    await fsExtra.emptyDirSync('./runs/detect')
 
     for (const { id, name } of findManyImage) {
         const url = `${uploads}/${name}`
