@@ -34,7 +34,7 @@ router.put('/images/:id', upload.single('image'), async (req, res) => {
 
     await deleteFile(existImage.name)
 
-    await prisma.image.update({
+    const img = await prisma.image.update({
         where: { id },
         data: {
             name: { set: filename },
@@ -45,7 +45,7 @@ router.put('/images/:id', upload.single('image'), async (req, res) => {
     })
 
     return res.json({
-        id: target.id
+        id: img.id
     })
 })
 

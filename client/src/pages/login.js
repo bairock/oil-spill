@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { Form, Card as AntCard, Input, Button as AntButton, message, Spin } from 'antd'
 import { useMutation } from '@apollo/client'
@@ -22,6 +22,14 @@ const emailRule = {
 export const Login = () => {
 
     const { user, loading: userLoading } = useUser()
+    const [form] = Form.useForm()
+
+    useEffect(() => {
+        form.setFieldsValue({
+            login: "user@mail.ru",
+            password: "qwe123qwe"
+        })
+    }, [])
 
     const [signIn, { loading }] = useMutation(LOGIN_USER, {
         onCompleted: ({ loginUser: { token } }) => {
@@ -58,7 +66,7 @@ export const Login = () => {
     return (
         <Wrapper>
             <Card title="Вход в панель администратора">
-                <Form onFinish={handleSubmitForm} layout="vertical" name="login">
+                <Form form={form} onFinish={handleSubmitForm} layout="vertical" name="login">
                     <Form.Item
                         colon={false}
                         label="Эл. почта"
