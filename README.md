@@ -44,4 +44,17 @@ pip install -r requirements.txt
 3. Run server
 
 ```
-node index.js
+yarn start
+
+# Client
+
+1. Install dependencies
+
+```
+cd client && yarn install
+```
+
+2. Run client
+
+```
+yarn start

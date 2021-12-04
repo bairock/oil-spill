@@ -1,0 +1,5 @@
+train: ./data/oil/train/images
+val: ./data/oil/valid/images
+
+nc: 1
+names: ['oil']
